@@ -23,7 +23,7 @@ final public class SwitchDataFormatEncoder {
 
     public convenience init(context: MTLContext,
                             conversionType: ConversionType) throws {
-        try self.init(library: context.library(for: Self.self),
+        try self.init(library: context.library(for: .module),
                       conversionType: conversionType)
     }
 
@@ -48,44 +48,44 @@ final public class SwitchDataFormatEncoder {
 
     // MARK: - Encode
 
-    public func callAsFunction(normalizedTexture: MTLTexture,
-                               unnormalizedTexture: MTLTexture,
+    public func callAsFunction(normalized: MTLTexture,
+                               unnormalized: MTLTexture,
                                in commandBuffer: MTLCommandBuffer) {
-        self.encode(normalizedTexture: normalizedTexture,
-                    unnormalizedTexture: unnormalizedTexture,
+        self.encode(normalized: normalized,
+                    unnormalized: unnormalized,
                     in: commandBuffer)
     }
 
-    public func callAsFunction(normalizedTexture: MTLTexture,
-                               unnormalizedTexture: MTLTexture,
+    public func callAsFunction(normalized: MTLTexture,
+                               unnormalized: MTLTexture,
                                using encoder: MTLComputeCommandEncoder) {
-        self.encode(normalizedTexture: normalizedTexture,
-                    unnormalizedTexture: unnormalizedTexture,
+        self.encode(normalized: normalized,
+                    unnormalized: unnormalized,
                     using: encoder)
     }
 
-    public func encode(normalizedTexture: MTLTexture,
-                       unnormalizedTexture: MTLTexture,
+    public func encode(normalized: MTLTexture,
+                       unnormalized: MTLTexture,
                        in commandBuffer: MTLCommandBuffer) {
         commandBuffer.compute { encoder in
-            self.encode(normalizedTexture: normalizedTexture,
-                        unnormalizedTexture: unnormalizedTexture,
+            self.encode(normalized: normalized,
+                        unnormalized: unnormalized,
                         using: encoder)
         }
     }
 
-    public func encode(normalizedTexture: MTLTexture,
-                       unnormalizedTexture: MTLTexture,
+    public func encode(normalized: MTLTexture,
+                       unnormalized: MTLTexture,
                        using encoder: MTLComputeCommandEncoder) {
-        encoder.set(textures: [normalizedTexture,
-                               unnormalizedTexture])
+        encoder.set(textures: [normalized,
+                               unnormalized])
 
         if self.deviceSupportsNonuniformThreadgroups {
             encoder.dispatch2d(state: self.pipelineState,
-                               exactly: normalizedTexture.size)
+                               exactly: normalized.size)
         } else {
             encoder.dispatch2d(state: self.pipelineState,
-                               covering: normalizedTexture.size)
+                               covering: normalized.size)
         }
     }
 

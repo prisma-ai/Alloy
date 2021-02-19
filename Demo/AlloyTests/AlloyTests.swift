@@ -23,8 +23,7 @@ class AlloyTests: XCTestCase {
         do {
             self.context = try MTLContext()
 
-            let library = try self.context
-                                  .library(for: Self.self)
+            let library = try self.context.library(for: .module)
 
             self.evenInitState = try library.computePipelineState(function: "initialize_even")
 
@@ -63,11 +62,11 @@ class AlloyTests: XCTestCase {
 
     func testEvenPerformance() {
         self.measure {
-            self.runGPUWork { (encoder, texture, outputTexture) in
+            self.runGPUWork { (encoder, texture, output) in
                 encoder.setTexture(texture, index: 0)
                 encoder.dispatch2d(state: self.evenInitState, covering: texture.size)
 
-                encoder.setTexture(outputTexture, index: 1)
+                encoder.setTexture(output, index: 1)
                 encoder.dispatch2d(state: self.evenProcessState, covering: texture.size)
             }
         }
@@ -75,11 +74,11 @@ class AlloyTests: XCTestCase {
 
     func testEvenOptimizedPerformance() {
         self.measure {
-            self.runGPUWork { (encoder, texture, outputTexture) in
+            self.runGPUWork { (encoder, texture, output) in
                 encoder.setTexture(texture, index: 0)
                 encoder.dispatch2d(state: self.evenOptimizedInitState, covering: texture.size)
 
-                encoder.setTexture(outputTexture, index: 1)
+                encoder.setTexture(output, index: 1)
                 encoder.dispatch2d(state: self.evenOptimizedProcessState, covering: texture.size)
             }
         }
@@ -87,11 +86,11 @@ class AlloyTests: XCTestCase {
 
     func testExactPerformance() {
         self.measure {
-            self.runGPUWork { (encoder, texture, outputTexture) in
+            self.runGPUWork { (encoder, texture, output) in
                 encoder.setTexture(texture, index: 0)
                 encoder.dispatch2d(state: self.exactInitState, exactly: texture.size)
 
-                encoder.setTexture(outputTexture, index: 1)
+                encoder.setTexture(output, index: 1)
                 encoder.dispatch2d(state: self.exactProcessState, exactly: texture.size)
             }
         }
@@ -106,22 +105,20 @@ class AlloyTests: XCTestCase {
 
             for wd in 0..<maximumThreadgroupSize.width {
                 for ht in 0..<maximumThreadgroupSize.height {
-                    var texture = try self.context
-                                          .texture(width:  self.textureBaseWidth + wd,
-                                                   height: self.textureBaseHeight + ht,
-                                                   pixelFormat: .rgba8Unorm)
+                    var texture = try self.context.texture(width:  self.textureBaseWidth + wd,
+                                                           height: self.textureBaseHeight + ht,
+                                                           pixelFormat: .rgba8Unorm)
 
-                    var outputTexture = try self.context
-                                                .texture(width:  self.textureBaseWidth + wd,
-                                                         height: self.textureBaseHeight + ht,
-                                                         pixelFormat: .rgba8Unorm)
+                    var output = try self.context.texture(width:  self.textureBaseWidth + wd,
+                                                          height: self.textureBaseHeight + ht,
+                                                          pixelFormat: .rgba8Unorm)
 
                     try self.context.scheduleAndWait { buffer in
                         buffer.compute { encoder in
                             for _ in 0...self.gpuIterations {
-                                encoding(encoder, texture, outputTexture)
+                                encoding(encoder, texture, output)
 
-                                swap(&texture, &outputTexture)
+                                swap(&texture, &output)
                             }
                         }
 
@@ -156,8 +153,7 @@ class IdealSizeTests: XCTestCase {
         do {
             self.context = try MTLContext()
 
-            let library = try self.context
-                                  .library(for: Self.self)
+            let library = try self.context.library(for: .module)
 
             self.evenState = try library.computePipelineState(function: "fill_with_threadgroup_size_even")
 
